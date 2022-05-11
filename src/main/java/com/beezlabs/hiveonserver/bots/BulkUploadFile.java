@@ -116,8 +116,8 @@ public class BulkUploadFile extends JavaBotTemplate {
         Connection conn = null;
         try {
             Class.forName("org.postgresql.Driver");
-            String url = "jdbc:postgresql://" + hostName + ":" + port + "/" + "postgres";
-            conn = DriverManager.getConnection(url,"postgres", "navani");
+            String url = "jdbc:postgresql://" + hostName + ":" + port + "/" + dbName;
+            conn = DriverManager.getConnection(url,postgresCred.get("username"), postgresCred.get("password"));
             conn.setAutoCommit(false);
         } catch (Exception ex) {
             throw ex;

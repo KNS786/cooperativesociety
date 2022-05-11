@@ -25,7 +25,7 @@ public class BulkUploadTest {
             proposedBotInputs.put("filePath", new Variable("C:\\Users\\Digital Suppliers\\Downloads\\cooperativereports.xlsx", VariableType.STRING, Object.class));
             proposedBotInputs.put("workSheetName", new Variable("Coopertive", VariableType.STRING, Object.class));
             proposedBotInputs.put("requestedByTulipUserName", new Variable("navani@beezlabs.com", VariableType.STRING, Object.class));
-            proposedBotInputs.put("postgresCredentials", new Variable("postgresCredentialsList", VariableType.ARRAY, Object.class));
+            proposedBotInputs.put("postgresCredentials", new Variable("postgresCredentialsList", VariableType.STRING, Object.class));
             BasicAuthModel PostgresCredentials = new BasicAuthModel("postgres", "navani");
             PostgresCredentials.setUsername("postgres");
             PostgresCredentials.setPassword("navani");
@@ -36,8 +36,6 @@ public class BulkUploadTest {
             proposedBotInputs.put("dmsCredentials", new Variable("dmsCredentialsList", VariableType.ARRAY, Object.class));
 
             BasicAuthModel dmsCredentials = new BasicAuthModel("generic", "v5N0]rByVEOjT");
-//            dmsCredentials.setUsername("generic");
-//            dmsCredentials.setPassword("v5N0]rByVEOjT");
             Credential credentialDms = new Credential();
             credentialDms.setBasicAuth(dmsCredentials);
             BotIdentity dmsCreds = new BotIdentity("dmsCredentialsList", credentialDms, IdentityType.BASIC_AUTH);
