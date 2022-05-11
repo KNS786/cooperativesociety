@@ -23,7 +23,7 @@ import java.time.Instant;
 import java.util.*;
 
 class Report {
-    public String company_code, p_id, employee_name, description, relm_amount, sent_to_EAG_on;
+    public String company_code, employee_id, employee_name, pay_element_description, amount, remarks,mail;
 }
 
 class TulipCredentials{
@@ -57,8 +57,10 @@ public class BulkUploadFile extends JavaBotTemplate {
             BotInputs.DmsReadApi  = botExecutionModel.getProposedBotInputs().get("dmsRead").getValue().toString();
             String DmsCredentials = botExecutionModel.getProposedBotInputs().get("dmsCredentials").getValue().toString();
             Map<String, String> dmsCredentialList = GetIdentityBasicAuth(DmsCredentials, botExecutionModel.getIdentityList());
+
             String fileSignature = botExecutionModel.getProposedBotInputs().get("fileSignature").getValue().toString();
             Map<String, String> postgresCredential = GetIdentityBasicAuth(BotInputs.PostgresCreds, botExecutionModel.getIdentityList());
+
             boolean approvalStatus;
             if (IsApproved(BotInputs.FormKey)) {
                 addVariable("approvalEntry", "INIf");
@@ -67,7 +69,7 @@ public class BulkUploadFile extends JavaBotTemplate {
                 GetValuesFromExcel(inputStream, BotInputs.WorkSheetName);
                 addVariable("dmsStatus", "Success");
                 Connection connection = ConnectDatabase(postgresCredential, BotInputs.hostName, BotInputs.Port, BotInputs.DbName);
-                InsertIntoDatabaseOte(connection, BotInputs.TableName, Integer.parseInt(String.valueOf(BotInputs.UpdateCount)), BotInputs.UserId);
+                InsertIntoDatabaseCooperative(connection, BotInputs.TableName, Integer.parseInt(String.valueOf(BotInputs.UpdateCount)), BotInputs.UserId);
                 approvalStatus = true;
             } else {
                 addVariable("approvalEntry", "INelse");
@@ -83,16 +85,17 @@ public class BulkUploadFile extends JavaBotTemplate {
     }
 
 
-    private Map<String, String> GetIdentityBasicAuth(String username, List<BotIdentity> botIdentityList) {
+    public Map<String, String> GetIdentityBasicAuth(String username, List<BotIdentity> botIdentityList) {
         Map<String, String> value = new HashMap<>();
         for (BotIdentity botIdentity : botIdentityList
         ) {
             if (botIdentity.getIdentityType().name().equals("BASIC_AUTH")) {
+
                 if (botIdentity.getName().equals(username)) {
                     value.put("username", botIdentity.getCredential().getBasicAuth().getUsername());
                     value.put("password", botIdentity.getCredential().getBasicAuth().getPassword());
-                    break;
                 }
+
             }
         }
         return value;
@@ -113,8 +116,8 @@ public class BulkUploadFile extends JavaBotTemplate {
         Connection conn = null;
         try {
             Class.forName("org.postgresql.Driver");
-            String url = "jdbc:postgresql://" + hostName + ":" + port + "/" + dbName;
-            conn = DriverManager.getConnection(url, postgresCred.get("username"), postgresCred.get("password"));
+            String url = "jdbc:postgresql://" + hostName + ":" + port + "/" + "postgres";
+            conn = DriverManager.getConnection(url,"postgres", "navani");
             conn.setAutoCommit(false);
         } catch (Exception ex) {
             throw ex;
@@ -143,17 +146,22 @@ public class BulkUploadFile extends JavaBotTemplate {
             XSSFSheet sheet = workbook.getSheet(workSheetName);
             int lastRow = sheet.getLastRowNum();
             for (int row = 1; row <= lastRow; row++) {
-                com.beezlabs.hiveonserver.bots.Report report = new com.beezlabs.hiveonserver.bots.Report();
-                Row rowValue = sheet.getRow(row);
-                DataFormatter dataFormatter = new DataFormatter();
-                report.company_code = dataFormatter.formatCellValue(rowValue.getCell(0));
-                report.p_id = dataFormatter.formatCellValue(rowValue.getCell(1));
-                report.employee_name = dataFormatter.formatCellValue(rowValue.getCell(2));
-                report.description = dataFormatter.formatCellValue(rowValue.getCell(3));
-                report.relm_amount = dataFormatter.formatCellValue(rowValue.getCell(4));
-                report.sent_to_EAG_on = dataFormatter.formatCellValue(rowValue.getCell(5));
-                if(!(report.company_code.equals("") || report.p_id.equals("") || report.employee_name.equals("") || report.description.equals("") || report.relm_amount.equals("") || report.sent_to_EAG_on.equals("") )){
-                    ExcelSheetValues.add( report );
+                try {
+                    com.beezlabs.hiveonserver.bots.Report report = new com.beezlabs.hiveonserver.bots.Report();
+                    Row rowValue = sheet.getRow(row);
+                    DataFormatter dataFormatter = new DataFormatter();
+                    report.company_code = dataFormatter.formatCellValue(rowValue.getCell(0));
+                    report.employee_id = dataFormatter.formatCellValue(rowValue.getCell(1));
+                    report.employee_name = dataFormatter.formatCellValue(rowValue.getCell(2));
+                    report.pay_element_description = dataFormatter.formatCellValue(rowValue.getCell(3));
+                    report.amount = dataFormatter.formatCellValue(rowValue.getCell(4));
+                    report.remarks = dataFormatter.formatCellValue(rowValue.getCell(5));
+                    report.mail = dataFormatter.formatCellValue(rowValue.getCell(6));
+                    if (!(report.company_code.equals("") || report.employee_id.equals("") || report.employee_name.equals("") || report.pay_element_description.equals("") || report.amount.equals("")  || report.mail.equals(""))) {
+                        ExcelSheetValues.add(report);
+                    }
+                }catch(Exception e){
+                    System.out.println("Exception has occured");
                 }
 
             }
@@ -162,7 +170,7 @@ public class BulkUploadFile extends JavaBotTemplate {
         }
     }
 
-    public void InsertIntoDatabaseOte(Connection connection, String tableName, int insertCountPerBatch, String userId) throws Exception {
+    public void InsertIntoDatabaseCooperative(Connection connection, String tableName, int insertCountPerBatch, String userId) throws Exception {
         try {
             int visited = 0;
             Instant instant = Instant.now();
@@ -178,11 +186,12 @@ public class BulkUploadFile extends JavaBotTemplate {
                 int listItr;
                 for (listItr = visited + 0; listItr < listCount && listItr < insertCountPerBatch; listItr++) {
                     preparedStatement.setString(1, ExcelSheetValues.get(listItr).company_code);
-                    preparedStatement.setString(2, ExcelSheetValues.get(listItr).p_id);
+                    preparedStatement.setString(2, ExcelSheetValues.get(listItr).employee_id);
                     preparedStatement.setString(3, ExcelSheetValues.get(listItr).employee_name);
-                    preparedStatement.setString(4, ExcelSheetValues.get(listItr).description);
-                    preparedStatement.setString(5, ExcelSheetValues.get(listItr).relm_amount);
-                    preparedStatement.setString(6, ExcelSheetValues.get(listItr).sent_to_EAG_on);
+                    preparedStatement.setString(4, ExcelSheetValues.get(listItr).pay_element_description);
+                    preparedStatement.setString(5, ExcelSheetValues.get(listItr).amount);
+                    preparedStatement.setString(6, ExcelSheetValues.get(listItr).remarks);
+                    preparedStatement.setString(7,ExcelSheetValues.get(listItr).mail);
                     preparedStatement.setTimestamp(8, currentTime);
                     preparedStatement.setString(9, userId);
                     preparedStatement.addBatch();
